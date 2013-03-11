@@ -7,10 +7,14 @@ module MetaContent
 
     def sanitize(raw_results)
       sanitized_results = HashWithIndifferentAccess.new
-      raw_results.each do |k,v|
-        options = schema[k]
-        next unless options
-        sanitized_results[k] = sanitize_value(v, options[:type] || :string)
+      raw_results.each do |scope, results|
+        results.each do |k,v|
+          options = schema[scope] || {}
+          options = options[k]
+          next unless options
+          sanitized_results[scope] ||= {}
+          sanitized_results[scope][k] = sanitize_value(v, options[:type] || :string)
+        end
       end
       sanitized_results
     end

@@ -3,8 +3,9 @@ require "meta_content/version"
 module MetaContent
   extend ActiveSupport::Concern
 
-  autoload :Query, 'meta_content/query'
-  autoload :Sanitizer, 'meta_content/sanitizer'
+  autoload :Dsl,        'meta_content/dsl'
+  autoload :Query,      'meta_content/query'
+  autoload :Sanitizer,  'meta_content/sanitizer'
 
   included do
     class_attribute :meta_content_fields
@@ -15,27 +16,9 @@ module MetaContent
 
   module ClassMethods
 
-    def meta(*fields)
-      options = fields.extract_options!
-      fields.each do |field|
-        create_accessors_for_meta_field(field, options)
-      end
-    end
-
-    protected
-
-    def create_accessors_for_meta_field(field, options = {})
-      self.meta_content_fields[field] = options
-
-      class_eval <<-EV, __FILE__, __LINE__+1
-        def #{field}
-          read_meta(:#{field})
-        end
-
-        def #{field}=(val)
-          write_meta(:#{field}, val)
-        end
-      EV
+    def meta(scope = nil, &block)
+      dsl = MetaContent::Dsl.new(self, scope)
+      dsl.instance_eval(&block)
     end
 
   end
@@ -61,8 +44,8 @@ module MetaContent
 
   def store_meta
     updates, deletes = meta_changes
-    meta_query.update_all(updates) if updates.any?
-    meta_query.delete_all(deletes) if deletes.any?
+    meta_query.update_all(updates)
+    meta_query.delete_all(deletes)
   end
 
   def meta_query
@@ -74,37 +57,48 @@ module MetaContent
   end
 
   def meta_changes
+    return [{}, {}] if @meta.nil?
+
     was     = self.send(:attribute_was, :meta) || {}
     is      = self.meta
-    updates = {}
-    
-    is.each do |k,v|
-      updates[k] = v if was[k] != v
-    end
 
-    deletes = was.keys - is.keys
+    updates = {}
+    deletes = {}
+
+    is.each do |scope,scoped_is|
+      scoped_was = was[scope] || {}
+      scoped_is.each do |k,v|
+        updates[scope] ||= {}
+        updates[scope][k] = v if was[k] != v
+      end
+
+      deletes[scope] = scoped_was.keys - scoped_is.keys
+    end
 
     [updates, deletes]
   end
 
-  def default_meta(field)
-    options = self.class.meta_content_fields[field]
-    options.try(:[], :default)
+  def default_meta(scope, field)
+    options = self.class.meta_content_fields.fetch(scope, {})
+    options.fetch(:default, nil)
   end
 
-  def read_meta(field)
-    self.meta.fetch(field, default_meta(field))
+  def read_meta(scope, field)
+    scoped_meta = self.meta.fetch(scope, {})
+    scoped_meta.fetch(field, default_meta(scope, field))
   end
 
-  def write_meta(field, value)
-    unless self.meta[field] == value
-      attribute_will_change!(field)
+  def write_meta(scope, field, value)
+    self.meta[scope] ||= {}
+    unless self.meta[scope][field] == value
+      attribute_name = scope.to_s == 'class' ? field : [scope, field].join('_')
+      attribute_will_change!(attribute_name)
       attribute_will_change!(:meta)
 
       if value.nil?
-        self.meta.delete(field)
+        self.meta[scope].delete(field)
       else
-        self.meta[field] = value
+        self.meta[scope][field] = value
       end
     end
   end
