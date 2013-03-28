@@ -36,6 +36,12 @@ module MetaContent
   def meta
     @meta ||= _retrieve_meta
   end
+  
+  def meta=(new_meta)
+    self.meta
+    send(:attribute_will_change!, :meta)
+    @meta = new_meta
+  end
 
 
   protected
