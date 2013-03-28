@@ -5,32 +5,40 @@ module MetaContent
       @record = record
     end
 
-    def sanitize(raw_results)
-      sanitized_results = HashWithIndifferentAccess.new
-      raw_results.each do |scope, results|
-        results.each do |k,v|
-          options = schema[scope] || {}
-          options = options[k]
-          next unless options
-          sanitized_results[scope] ||= {}
-          sanitized_results[scope][k] = sanitize_value(v, options[:type] || :string)
-        end
+    def sanitize_all_out(values)
+      out = {}
+
+      values.each do |k,v|
+        type = type_from_key(k)
+        out[k] = sanitize_out(v, type)
       end
-      sanitized_results
+
+      out
+    end
+
+    def sanitize_all_in(values)
+      out = {}
+
+      values.each do |k,v|
+        type = type_from_key(k)
+        out[k] = sanitize_in(v, type)
+      end
+
+      out
     end
 
     protected
 
-    def sanitize_value(value, type)
+    def sanitize_out(value, type)
       case type
       when :integer, :fixnum
         value.to_i
       when :float, :number
         value.to_f
       when :date
-        Date.parse(value)
+        Time.zone.at(value.to_i).to_date
       when :datetime, :time
-        Time.parse(value)
+        Time.zone.at(value.to_i)
       when :boolean, :bool
         !!(value.to_s =~ /1|t|y/)
       when :symbol, :sym
@@ -40,12 +48,27 @@ module MetaContent
       end
     end
 
-    def klass
-      @record.class
+    def sanitize_in(value, type)
+      case type
+      when :date, :datetime, :time
+        value.to_time.to_i
+      when :boolean, :bool
+        value.to_s =~ /1|t|y/ ? '1' : '0'
+      else
+        value.to_s
+      end
     end
 
-    def schema
-      klass.meta_content_fields
+    def type_from_key(key)
+      scopes = key.split('/').reject(&:blank?)
+      field  = scopes.pop
+
+      resource = @record
+      while scope = scopes.shift
+        resource = resource.send(scope)
+      end
+      
+      resource.send("#{field}_type")
     end
 
   end
