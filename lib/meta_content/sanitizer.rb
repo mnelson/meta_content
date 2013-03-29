@@ -60,7 +60,7 @@ module MetaContent
     end
 
     def type_from_key(key)
-      scopes = key.split('/').reject(&:blank?)
+      scopes = key.split('__').reject(&:blank?)
       field  = scopes.pop
 
       resource = @record

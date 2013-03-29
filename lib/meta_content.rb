@@ -24,10 +24,6 @@ module MetaContent
 
   end
 
-  def _meta_object
-    self
-  end
-
   def reload(*args)
     @meta = nil
     super
@@ -36,15 +32,39 @@ module MetaContent
   def meta
     @meta ||= _retrieve_meta
   end
-  
-  def meta=(new_meta)
-    self.meta
-    send(:attribute_will_change!, :meta)
-    @meta = new_meta
+
+  def apply_meta(scope, data)
+    data.each do |k,v|
+      self._write_meta(scope, k, v)
+    end
+  end
+
+  def method_missing(method_name, *args, &block)
+    if method_name.to_s =~ /^([a-z0-9]+)__/
+      
+      scope_methods = method_name.to_s.split('__')
+      
+      object = self
+      while scope_methods.length > 1
+        object = object.send(scope_methods.shift)
+      end
+
+      object.send(scope_methods.first, *args)
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(method_name, include_private = false)
+    super || method_name.to_s =~ /^([a-z0-9]+)__/
   end
 
 
   protected
+
+  def _meta_object
+    self
+  end
 
   def _retrieve_meta
     return {} if new_record?
@@ -90,12 +110,12 @@ module MetaContent
   end
 
   def _read_meta(scope, field)
-    key = "#{scope}/#{field}"
+    key = [scope, field].reject(&:blank?).join('__')
     self.meta[key]
   end
 
   def _write_meta(scope, field, value)
-    key = "#{scope}/#{field}"
+    key = [scope, field].reject(&:blank?).join('__')
     
     unless self.meta[key] == value
       send(:attribute_will_change!, :meta)

@@ -5,7 +5,7 @@ module MetaContent
       def class_for_scope(base_class, scope = nil)
         return base_class if scope.blank?
 
-        class_name = "DynamicMetaClass#{scope.to_s.classify}"
+        class_name = "DynamicMetaProxy#{scope.to_s.classify}"
         
         if base_class.const_defined?(class_name)
           base_class.const_get(class_name) 
@@ -15,6 +15,13 @@ module MetaContent
           base_class.class_eval <<-EV, __FILE__, __LINE__ + 1
             def #{scope}
               #{class_name}.new(self._meta_object)
+            end
+
+            def #{scope}=(data)
+              proxy = #{class_name}.new(self._meta_object)
+              data.each do |k,v|
+                proxy.send("\#{k}=", v)
+              end
             end
           EV
           klass
@@ -68,7 +75,6 @@ module MetaContent
         def #{field}=(val)
           self._meta_object.send(:_write_meta, self.class._meta_scope, :#{field}, val)
         end
-
       EV
 
       options.each do |k,v|
@@ -77,6 +83,11 @@ module MetaContent
             #{v.inspect}
           end
         EV
+      end
+
+      if @klass.respond_to?(:meta_methods=)
+        @klass.meta_methods ||= []
+        @klass.meta_methods << field
       end
     end
 
