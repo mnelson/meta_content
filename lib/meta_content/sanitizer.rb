@@ -43,6 +43,11 @@ module MetaContent
         !!(value.to_s =~ /1|t|y/)
       when :symbol, :sym
         value.to_sym
+      when :array, :arr, :hash, :json
+        JSON.parse(value.to_s)
+      when :enum, :enumerator
+        arr = JSON.parse(value.to_s)
+        Enumerator.new(arr)
       else
         value
       end
@@ -54,6 +59,14 @@ module MetaContent
         value.to_time.to_i
       when :boolean, :bool
         value.to_s =~ /1|t|y/ ? '1' : '0'
+      when :array, :arr
+        Array(value).to_json
+      when :enum, :enumerator
+        Array(value.entries).to_json
+      when :hash
+        value.to_json
+      when :json
+        value.is_a?(String) ? value : value.to_json
       else
         value.to_s
       end

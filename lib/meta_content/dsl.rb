@@ -1,5 +1,10 @@
+require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/array/extract_options'
+require 'active_support/core_ext/string/inflections'
 module MetaContent
   class Dsl
+
+    FIELD_TYPES = %w(integer int float number date datetime time boolean bool symbol sym string array arr enum enumerator json hash)
 
     class << self
       def class_for_scope(base_class, scope = nil)
@@ -45,7 +50,7 @@ module MetaContent
       MetaContent::Dsl.meta(@klass, scope, &block)
     end
 
-    %w(integer int float number date datetime time boolean bool symbol sym string).each do |type|
+    FIELD_TYPES.each do |type|
       class_eval <<-CODE
         def #{type}(*fields)
           options = fields.extract_options!

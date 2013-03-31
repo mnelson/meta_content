@@ -1,15 +1,17 @@
 require "meta_content/version"
 
 module MetaContent
-  extend ActiveSupport::Concern
 
   autoload :Dsl,        'meta_content/dsl'
   autoload :Proxy,      'meta_content/proxy'
   autoload :Query,      'meta_content/query'
   autoload :Sanitizer,  'meta_content/sanitizer'
 
-  included do
-    after_save :_store_meta
+  def self.included(base)
+    base.extend ClassMethods
+    base.class_eval do
+      after_save :_store_meta
+    end
   end
 
   module ClassMethods
@@ -110,12 +112,12 @@ module MetaContent
   end
 
   def _read_meta(scope, field)
-    key = [scope, field].reject(&:blank?).join('__')
+    key = [scope, field].flatten.reject(&:blank?).join('__')
     self.meta[key]
   end
 
   def _write_meta(scope, field, value)
-    key = [scope, field].reject(&:blank?).join('__')
+    key = [scope, field].flatten.reject(&:blank?).join('__')
     
     unless self.meta[key] == value
       send(:attribute_will_change!, :meta)
