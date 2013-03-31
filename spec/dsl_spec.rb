@@ -31,11 +31,21 @@ describe MetaContent::Dsl do
     instance.whatever.test.should eql(44)
   end
 
-  MetaContent::Dsl::FIELD_TYPES.each do |type|
-    it "provides a shortcut to create a #{type} field" do
-      dsl.send(type, :test)
+  context "typecasting" do
+
+    after do
       clath.new.send("test_type").should eql(type.to_sym)
-    end 
+    end
+
+    MetaContent::Dsl::FIELD_TYPES.each do |type|
+      it "provides a shortcut to create a #{type} field" do
+        dsl.send(type, :test)
+      end
+
+      it "allows the field to be set by passing the :type option" do
+        dsl.field :test, :type => type
+      end
+    end
   end
 
 end
