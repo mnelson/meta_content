@@ -8,6 +8,28 @@ class MetaObject
 
   include MetaContent
 
+  meta :scope1 do
+    string  :test_string
+    int     :test_int
+    range   :test_range
+    float   :test_float
+    time    :test_time
+    date    :test_date
+
+    meta :subscope1 do
+      string :test_string
+    end
+  end
+
+  meta do
+    string  :test_string
+    int     :test_int
+    range   :test_range
+    float   :test_float
+    time    :test_time
+    date    :test_date
+  end
+
   def save
     run_callbacks :save do
       true

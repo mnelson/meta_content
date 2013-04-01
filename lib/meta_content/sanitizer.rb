@@ -1,3 +1,10 @@
+require 'active_support/core_ext/time/calculations'
+require 'active_support/core_ext/time/conversions'
+require 'active_support/core_ext/date/calculations'
+require 'active_support/core_ext/date/conversions'
+require 'active_support/core_ext/object/to_json'
+require 'active_support/json'
+
 module MetaContent
   class Sanitizer
 
@@ -36,18 +43,22 @@ module MetaContent
       when :float, :number
         value.to_f
       when :date
-        Time.zone.at(value.to_i).to_date
+        Time.at(value.to_i).to_date
       when :datetime, :time
-        Time.zone.at(value.to_i)
+        Time.at(value.to_i)
       when :boolean, :bool
         !!(value.to_s =~ /1|t|y/)
       when :symbol, :sym
         value.to_sym
       when :array, :arr, :hash, :json
-        JSON.parse(value.to_s)
-      when :enum, :enumerator
-        arr = JSON.parse(value.to_s)
-        Enumerator.new(arr)
+        ActiveSupport::JSON.decode(value.to_s)
+      when :range
+        arr = ActiveSupport::JSON.decode(value.to_s)
+        if arr[2]
+          (arr[0]...arr[1])
+        else
+          (arr[0]..arr[1])
+        end
       else
         value
       end
@@ -56,7 +67,8 @@ module MetaContent
     def sanitize_in(value, type)
       case type
       when :date, :datetime, :time
-        value.to_time.to_i
+        value = value.to_time if value.respond_to?(:to_time)
+        value.to_i.to_s
       when :boolean, :bool
         value.to_s =~ /1|t|y/ ? '1' : '0'
       when :array, :arr
@@ -67,6 +79,8 @@ module MetaContent
         value.to_json
       when :json
         value.is_a?(String) ? value : value.to_json
+      when :range
+        [value.first, value.last, value.exclude_end?].to_json
       else
         value.to_s
       end

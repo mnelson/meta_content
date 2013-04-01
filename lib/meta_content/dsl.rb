@@ -4,7 +4,7 @@ require 'active_support/core_ext/string/inflections'
 module MetaContent
   class Dsl
 
-    FIELD_TYPES = %w(integer int float number date datetime time boolean bool symbol sym string array arr enum enumerator json hash)
+    FIELD_TYPES = %w(integer int float number date datetime time boolean bool symbol sym string array arr range json hash)
 
     class << self
       def class_for_scope(base_class, scope = nil)
@@ -64,6 +64,7 @@ module MetaContent
 
     def field(*fields)
       options = fields.extract_options!
+      options[:type] = options[:type].to_sym if options[:type]
       fields.each do |field|
         create_accessors_for_meta_field(field, options)
       end

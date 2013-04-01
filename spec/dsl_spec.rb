@@ -34,15 +34,17 @@ describe MetaContent::Dsl do
   context "typecasting" do
 
     after do
-      clath.new.send("test_type").should eql(type.to_sym)
+      clath.new.send("test_type").should eql(@type.to_sym)
     end
 
     MetaContent::Dsl::FIELD_TYPES.each do |type|
       it "provides a shortcut to create a #{type} field" do
+        @type = type
         dsl.send(type, :test)
       end
 
-      it "allows the field to be set by passing the :type option" do
+      it "allows the field to be set by passing the :type option as #{type}" do
+        @type = type
         dsl.field :test, :type => type
       end
     end
