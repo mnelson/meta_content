@@ -1,0 +1,11 @@
+class Create<%= name.classify %>Meta < ActiveRecord::Migration
+  def change
+    create_table :<%= name %>_meta do |t|
+      t.integer :object_id
+      t.string :lookup
+      t.string :value
+    end
+
+    add_index :<%= name %>_meta, [:object_id, :lookup], :unique => true
+  end
+end

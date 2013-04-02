@@ -38,7 +38,7 @@ module MetaContent
 
     def sanitize_out(value, type)
       case type
-      when :integer, :fixnum
+      when :integer, :fixnum, :int
         value.to_i
       when :float, :number
         value.to_f

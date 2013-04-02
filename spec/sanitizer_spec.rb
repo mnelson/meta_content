@@ -13,6 +13,7 @@ describe MetaContent::Sanitizer do
     [:integer, '50', '50', 50],
     [:integer, 33.4, '33.4', 33],
     [:integer, 'test', 'test', 0],
+    [:int, '30.3', '30.3', 30],
     [:boolean, 'fail', '0', false],
     [:boolean, 'yes', '1', true],
     [:boolean, 'no', '0', false],
