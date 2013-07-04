@@ -5,5 +5,5 @@ gemspec
 
 gem 'rake'
 gem 'rspec'
-gem 'activesupport'
-gem 'activemodel'
+gem 'activesupport', '3.2.13'
+gem 'activemodel',   '3.2.13'
