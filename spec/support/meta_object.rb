@@ -6,6 +6,12 @@ class MetaObject
 
   define_model_callbacks :save
 
+  class << self
+    def connection
+      nil
+    end
+  end
+
   include MetaContent
 
   meta :scope1 do

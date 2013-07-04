@@ -24,6 +24,9 @@ module MetaContent
       ''
     end
 
+    def meta_connection
+      self.connection
+    end
   end
 
   def reload(*args)

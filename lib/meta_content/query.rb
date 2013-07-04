@@ -36,7 +36,7 @@ module MetaContent
     protected
 
     def qtn
-      klass.connection.quote_table_name("#{klass.table_name}_meta")
+      klass.meta_connection.quote_table_name("#{klass.table_name}_meta")
     end
 
     def quote(value)
@@ -52,7 +52,7 @@ module MetaContent
     end
 
     def execute(sql)
-      klass.connection.execute(sql)
+      klass.meta_connection.execute(sql)
     end
 
   end

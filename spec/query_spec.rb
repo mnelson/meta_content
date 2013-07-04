@@ -30,5 +30,15 @@ describe MetaContent::Query do
     query.should_receive(:execute).with("DELETE FROM `metas` WHERE `metas`.object_id = ``30`` AND `metas`.lookup IN (``a``,``b``)")
     query.delete_all([:a, :b])
   end
+
+  it 'should use the meta_connection (defaulted to the class\' standard connection) in case the app has redefined it' do
+    con = double(:execute => [])
+    
+    MetaObject.stub(:connection).and_return(con)
+    MetaObject.meta_connection.should eql(con)
+
+    con.should_receive(:execute).once
+    query.select_all
+  end
     
 end
